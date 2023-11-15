@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "bball-analysis"
+version = "0.1.0"
+description = ""
+authors = ["Aaron Bannin <aaronbannin@Aarons-MacBook-Pro.local>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+streamlit = "^1.28.2"
+basketball_reference_web_scraper = { path = "../basketball_reference_web_scraper/", develop = true }
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+packages = [
+    { include = "bball_analysis" }
+]
