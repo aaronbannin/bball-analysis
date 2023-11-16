@@ -1,3 +1,5 @@
+from typing import Any
+
 import streamlit as st
 import pandas as pd
 from basketball_reference_web_scraper import client as bbr_client
@@ -29,6 +31,13 @@ def set_chat_context():
     if "messages" not in st.session_state:
         st.session_state["messages"] = seed_messages
 
+def enrich_user_message(message: str, content: Any):
+    """
+    Add retrieved information into message
+    """
+    return f"{message}\n\n{content}"
+
+
 
 team_name = st.selectbox(
     INITIAL_PROMPT,
@@ -39,13 +48,20 @@ team_name = st.selectbox(
 
 if team_name is not None:
     if "messages" not in st.session_state:
+        standings_json = bbr_client.standings(season_end_year=2024)
+        standings = pd.DataFrame.from_dict(standings_json)
+        seed_message = f"I am researching the NBA team {team_name}."
         seed_messages = [
+            {"role": "user", "content": seed_message}
             # {"role": "user", "content": f"I am researching the NBA team {team_name}."}
         ]
         # seed_messages = [{
         #     "role": "assistant", "content": INITIAL_PROMPT
         # }]
         st.session_state["messages"] = seed_messages
+        seed_msg_response = agent.chat(enrich_user_message(seed_message, standings))
+        st.session_state.messages.append({"role": "role", "content": seed_msg_response})
+
 
     # st.session_state.messages.append({"role": "user", "content": f"I am researching the NBA team {team_name}."})
 
@@ -55,7 +71,7 @@ if team_name is not None:
     if prompt := st.chat_input():
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
-        # response = openai.chat.completions.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
+
         response = agent.chat(prompt)
         st.session_state.messages.append({"role": "assistant", "content": response})
         st.chat_message("assistant").write(response)
