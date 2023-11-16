@@ -12,6 +12,7 @@ basketball_reference_web_scraper = { path = "../basketball_reference_web_scraper
 openai = "^1.3.0"
 click = "^8.1.7"
 python-dotenv = "^1.0.0"
+loguru = "^0.7.2"
 
 
 [build-system]
