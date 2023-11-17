@@ -15,9 +15,7 @@ INSTRUCTIONS = "You are assisting an analyst for basketball. Give simple and suc
 assistant_config = {
     "name": ASSISTANT_NAME,
     "instructions": INSTRUCTIONS,
-    # "tools": [{"type": "retrieval"}],
     "model": "gpt-3.5-turbo-1106"
-    # "model": "gpt-4-1106-preview"
 }
 
 def get_assistant() -> Optional[Assistant]:
