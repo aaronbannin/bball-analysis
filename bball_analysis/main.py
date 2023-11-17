@@ -7,9 +7,7 @@ from basketball_reference_web_scraper.data import Team
 from loguru import logger
 
 from llm import Agent
-
-INITIAL_PROMPT = "I am your AI driven analyst. What team would you like to research?"
-st.title('Lets play basketball!')
+from prompts import Prompts
 
 
 agent = Agent()
@@ -39,15 +37,16 @@ def enrich_user_message(message: str, content: Any):
 
 
 # app
+st.title("Talkin' Some Bball Outside of the School")
 team_name = st.selectbox(
-    INITIAL_PROMPT,
+    Prompts.initial_user_prompt.render(),
     [t.value for t in Team],
     index=None,
     key="team",
     on_change=set_chat_context
 )
 
-if team_name is not None:
+if team_name is not None and "messages" in st.session_state:
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
