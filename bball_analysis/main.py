@@ -42,7 +42,8 @@ def set_chat_context():
     # reset memory for streamlit and openai
     st.session_state["agent"].set_thread()
     st.session_state["messages"] = seed_messages
-    seed_msg_response = st.session_state["agent"].chat(enrich_user_message(seed_message, overview.summary))
+    enriched_content = [overview.summary]
+    seed_msg_response = st.session_state["agent"].chat(enrich_user_message(seed_message, enriched_content))
     st.session_state.messages.append({"role": "role", "content": seed_msg_response})
 
 

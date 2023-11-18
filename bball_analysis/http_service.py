@@ -14,27 +14,28 @@ class BBallTable:
     class_name: str
     caption: str | None
     thead: str
-    tables: list[DataFrame]
+    table: DataFrame
 
     @classmethod
     def from_soup(cls, soup: BeautifulSoup):
         caption = soup.find('caption')
         thead = soup.find('thead')
 
-        dfs = read_html(str(soup))
-        _args = {
-            'id': soup.get('id'),
-            'class_name': soup.get('class'),
-            'caption': caption.get_text() if caption is not None else None,
-            'thead': thead.get_text() if thead is not None else None,
-            'tables': dfs
-        }
+        # should only be one table, but bs4 returns array
+        df = read_html(str(soup))[0]
 
-        return cls(**_args)
+        return cls(
+            id=soup.get('id'),
+            class_name=soup.get('class'),
+            caption=caption.get_text() if caption is not None else None,
+            thead=thead.get_text() if thead is not None else None,
+            table=df
+        )
+
 
 @dataclass
 class TeamOverview:
-    tables: list[BBallTable]
+    tables: dict[str, BBallTable]
     summary: Any
 
 class HTTPService:
@@ -67,6 +68,6 @@ class HTTPService:
         all_tables = [BBallTable.from_soup(t) for t in page.find_all('table')]
 
         return TeamOverview(
-            tables=[t for t in all_tables if t.id is not None],
+            tables={t.caption: t for t in all_tables if t.id is not None},
             summary=summary
         )
