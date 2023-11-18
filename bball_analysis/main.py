@@ -1,11 +1,11 @@
 from typing import Any
 
 import streamlit as st
-from basketball_reference_web_scraper.data import Team, TEAM_TO_TEAM_ABBREVIATION
 from loguru import logger
 
 from http_service import HTTPService
 from llm import Agent
+from mappings import Team, TEAM_TO_TEAM_ABBREVIATION
 from prompts import Prompts
 
 

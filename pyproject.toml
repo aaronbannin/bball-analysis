@@ -8,7 +8,6 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 streamlit = "^1.28.2"
-basketball_reference_web_scraper = { path = "../basketball_reference_web_scraper/", develop = true }
 openai = "^1.3.0"
 click = "^8.1.7"
 python-dotenv = "^1.0.0"

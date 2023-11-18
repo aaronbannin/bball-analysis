@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from pandas import read_html, DataFrame
 
-from basketball_reference_web_scraper.data import Team, TEAM_TO_TEAM_ABBREVIATION
+from mappings import Team, TEAM_TO_TEAM_ABBREVIATION
 
 @dataclass
 class BBallTable:
