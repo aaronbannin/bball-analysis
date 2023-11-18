@@ -6,7 +6,7 @@ authors = ["Aaron Bannin <aaronbannin@Aarons-MacBook-Pro.local>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "~3.9"
+python = "~3.9, !=3.9.7"
 streamlit = "^1.28.2"
 openai = "^1.3.0"
 click = "^8.1.7"
@@ -14,6 +14,7 @@ python-dotenv = "^1.0.0"
 loguru = "^0.7.2"
 jinja2 = "^3.1.2"
 bs4 = "^0.0.1"
+lxml = "^4.9.3"
 
 
 [tool.poetry.group.dev.dependencies]
