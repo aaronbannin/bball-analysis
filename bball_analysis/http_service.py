@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 import requests
 from bs4 import BeautifulSoup
@@ -12,7 +12,7 @@ from mappings import Team, TEAM_TO_TEAM_ABBREVIATION
 class BBallTable:
     id: str
     class_name: str
-    caption: str | None
+    caption: Optional[str]
     thead: str
     table: DataFrame
 
