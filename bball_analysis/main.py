@@ -1,8 +1,6 @@
 from typing import Any
 
 import streamlit as st
-import pandas as pd
-from basketball_reference_web_scraper import client as bbr_client
 from basketball_reference_web_scraper.data import Team, TEAM_TO_TEAM_ABBREVIATION
 from loguru import logger
 
@@ -11,23 +9,40 @@ from llm import Agent
 from prompts import Prompts
 
 
-agent = Agent()
 http = HTTPService()
+if st.session_state.get("agent") is None:
+    st.session_state["agent"] = Agent()
+
 
 # utility functions
 def set_chat_context():
-    ctx_team = st.session_state["team"]
-    _team = Team(ctx_team)
-    logger.info(f"team: {ctx_team} {TEAM_TO_TEAM_ABBREVIATION[_team]}")
+    """
+    Creates a clean context for chat.
+    Mutates st.session_state and the agent as side effects.
+    Probably should be a closure to make this a pure function?
+    """
 
-    overview = http.team_overview(ctx_team)
-    seed_message = f"I am researching the NBA team {ctx_team}."
+    team = st.session_state.get("team_picker")
+    current_team = st.session_state.get("team")
+    logger.info(f"team_picker {team} current_team {current_team}")
+    if current_team is not None and current_team == team:
+        # no change, do nothing
+        return
+
+    st.session_state["team"] = team
+    _team = Team(team)
+    logger.info(f"team: {team} {TEAM_TO_TEAM_ABBREVIATION[_team]}")
+
+    overview = http.team_overview(team)
+    seed_message = f"I am researching the NBA team {team}."
     seed_messages = [
         {"role": "user", "content": seed_message}
     ]
 
+    # reset memory for streamlit and openai
+    st.session_state["agent"].set_thread()
     st.session_state["messages"] = seed_messages
-    seed_msg_response = agent.chat(enrich_user_message(seed_message, overview.summary))
+    seed_msg_response = st.session_state["agent"].chat(enrich_user_message(seed_message, overview.summary))
     st.session_state.messages.append({"role": "role", "content": seed_msg_response})
 
 
@@ -44,7 +59,7 @@ team_name = st.selectbox(
     Prompts.initial_user_prompt.render(),
     [t.value for t in Team],
     index=None,
-    key="team",
+    key="team_picker",
     on_change=set_chat_context
 )
 
@@ -56,6 +71,6 @@ if team_name is not None and "messages" in st.session_state:
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
 
-        response = agent.chat(prompt)
+        response = st.session_state["agent"].chat(prompt)
         st.session_state.messages.append({"role": "assistant", "content": response})
         st.chat_message("assistant").write(response)

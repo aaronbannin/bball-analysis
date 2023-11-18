@@ -6,6 +6,7 @@ from loguru import logger
 from openai import OpenAI
 from openai.types.beta import Assistant, AssistantDeleted
 
+
 load_dotenv()
 client = OpenAI()
 
@@ -47,6 +48,10 @@ class Agent:
             raise Exception("Assistant does not exist; create one using the cli")
 
         self.assistant = _assistant
+        self.set_thread()
+
+    def set_thread(self):
+        logger.info("resetting memory")
         self.thread = self.client.beta.threads.create()
 
     def chat(self, message: str) -> str:
@@ -57,12 +62,13 @@ class Agent:
             content=message
         )
 
-        logger.info("creating thread")
+        logger.info("submitting run")
         run = self.client.beta.threads.runs.create(
             thread_id=self.thread.id,
             assistant_id=self.assistant.id
         )
 
+        # poll of status
         while run.status in ("queued", "in_progress"):
             logger.info(f"wating for run status {run.status}")
             run = client.beta.threads.runs.retrieve(
