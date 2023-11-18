@@ -4,7 +4,7 @@ from typing import Optional
 from dotenv import load_dotenv
 from loguru import logger
 from openai import OpenAI
-from openai.types.beta import Assistant
+from openai.types.beta import Assistant, AssistantDeleted
 
 load_dotenv()
 client = OpenAI()
@@ -34,6 +34,9 @@ def update_assistant(assistant_id: str) -> Assistant:
 
 def make_assistant() -> Assistant:
     return client.beta.assistants.create(**assistant_config)
+
+def delete_assistant(assistant_id: str) -> AssistantDeleted:
+    return client.beta.assistants.delete(assistant_id=assistant_id)
 
 class Agent:
     def __init__(self):

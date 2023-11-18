@@ -3,29 +3,31 @@ from typing import Any
 import streamlit as st
 import pandas as pd
 from basketball_reference_web_scraper import client as bbr_client
-from basketball_reference_web_scraper.data import Team
+from basketball_reference_web_scraper.data import Team, TEAM_TO_TEAM_ABBREVIATION
 from loguru import logger
 
+from http_service import HTTPService
 from llm import Agent
 from prompts import Prompts
 
 
 agent = Agent()
+http = HTTPService()
 
 # utility functions
 def set_chat_context():
     ctx_team = st.session_state["team"]
-    logger.info(f"team: {ctx_team}")
+    _team = Team(ctx_team)
+    logger.info(f"team: {ctx_team} {TEAM_TO_TEAM_ABBREVIATION[_team]}")
 
-    standings_json = bbr_client.standings(season_end_year=2024)
-    standings = pd.DataFrame.from_dict(standings_json)
+    overview = http.team_overview(ctx_team)
     seed_message = f"I am researching the NBA team {ctx_team}."
     seed_messages = [
         {"role": "user", "content": seed_message}
     ]
 
     st.session_state["messages"] = seed_messages
-    seed_msg_response = agent.chat(enrich_user_message(seed_message, standings))
+    seed_msg_response = agent.chat(enrich_user_message(seed_message, overview.summary))
     st.session_state.messages.append({"role": "role", "content": seed_msg_response})
 
 

@@ -1,6 +1,11 @@
 import click
 
-from bball_analysis.llm import get_assistant, make_assistant, update_assistant
+from bball_analysis.llm import (
+    delete_assistant,
+    get_assistant,
+    make_assistant,
+    update_assistant
+)
 
 
 ASSISTANT_NAME = "BBall Analyst"
@@ -27,7 +32,18 @@ def update_agent():
         click.echo(f"Cannot update; {ASSISTANT_NAME} does not exist.")
         return
 
-    return update_assistant(existing.id)
+    response = update_assistant(existing.id)
+    click.echo(response)
+
+@cli.command()
+def delete_agent():
+    existing = get_assistant()
+    if existing is None:
+        click.echo(f"Cannot delete; {ASSISTANT_NAME} does not exist.")
+        return
+
+    response = delete_assistant(existing.id)
+    click.echo(response)
 
 
 if __name__ == "__main__":
