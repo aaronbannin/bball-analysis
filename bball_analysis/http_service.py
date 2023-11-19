@@ -63,7 +63,7 @@ class HTTPService:
             script.extract()  # Remove script tags and their contents
 
         summary = "".join(summary_soup.find_all(text=True))
-
+        summary = re.sub(r'\n+', '\n', summary)
 
         all_tables = [BBallTable.from_soup(t) for t in page.find_all('table')]
 

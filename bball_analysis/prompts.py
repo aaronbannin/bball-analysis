@@ -8,6 +8,10 @@ class PromptManager:
         )
 
     @property
+    def gpt_instructions(self):
+        return self.env.get_template("gpt_instructions.jinja")
+
+    @property
     def initial_user_prompt(self):
         return self.env.get_template("initial_user_prompt.jinja")
 

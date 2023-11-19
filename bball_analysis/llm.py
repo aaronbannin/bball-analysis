@@ -6,16 +6,18 @@ from loguru import logger
 from openai import OpenAI
 from openai.types.beta import Assistant, AssistantDeleted
 
+from bball_analysis.prompts import Prompts
+
 
 load_dotenv()
 client = OpenAI()
 
 ASSISTANT_NAME = "BBall Analyst"
-INSTRUCTIONS = "You are assisting an analyst for basketball. Give simple and succinct analysis of provided data and suggest strategies to find deeper insights."
+
 
 assistant_config = {
     "name": ASSISTANT_NAME,
-    "instructions": INSTRUCTIONS,
+    "instructions": Prompts.gpt_instructions.render(),
     "model": "gpt-3.5-turbo-1106"
 }
 
@@ -84,4 +86,6 @@ class Agent:
             thread_id=self.thread.id
         )
 
+        logger.info("LLM response")
+        logger.info(messages)
         return messages.data[0].content[0].text.value

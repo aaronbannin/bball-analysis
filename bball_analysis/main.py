@@ -42,16 +42,18 @@ def set_chat_context():
     # reset memory for streamlit and openai
     st.session_state["agent"].set_thread()
     st.session_state["messages"] = seed_messages
-    enriched_content = [overview.summary]
+    # enriched_content = [str(overview.summary)]
+    enriched_content = [str(overview.summary), "you have the following data sets availiable", ",".join([t for t in overview.tables.keys()])]
     seed_msg_response = st.session_state["agent"].chat(enrich_user_message(seed_message, enriched_content))
     st.session_state.messages.append({"role": "role", "content": seed_msg_response})
 
 
-def enrich_user_message(message: str, content: Any):
+def enrich_user_message(message: str, content: list[str]):
     """
     Add retrieved information into message.
     """
-    return f"{message}\n\n{content}"
+    as_string = "\n".join(content)
+    return f"{message}\n\n{as_string}"
 
 
 # app

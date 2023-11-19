@@ -1,14 +1,12 @@
 import click
 
 from bball_analysis.llm import (
+    ASSISTANT_NAME,
     delete_assistant,
     get_assistant,
     make_assistant,
     update_assistant
 )
-
-
-ASSISTANT_NAME = "BBall Analyst"
 
 
 @click.group()
