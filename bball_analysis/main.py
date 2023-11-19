@@ -41,6 +41,7 @@ def set_chat_context():
 
     # reset memory for streamlit and openai
     st.session_state["agent"].set_thread()
+    st.session_state["agent"].add_datasets(overview.tables)
     st.session_state["messages"] = seed_messages
     # enriched_content = [str(overview.summary)]
     enriched_content = [str(overview.summary), "you have the following data sets availiable", ",".join([t for t in overview.tables.keys()])]
