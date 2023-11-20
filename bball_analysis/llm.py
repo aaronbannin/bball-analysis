@@ -1,4 +1,3 @@
-# from dataclasses import dataclass
 import json
 from os import getenv
 from time import sleep
@@ -11,8 +10,6 @@ from openai import OpenAI
 from openai.types.beta import Assistant, AssistantDeleted
 from openai.types.beta.threads.run import RequiredAction, Run
 from openai.types.beta.threads.runs.function_tool_call import Function as oaiFunction
-# from openai.types.beta.threads import Function
-# /openai/types/beta/threads/run.py
 
 from bball_analysis.prompts import Prompts
 
@@ -22,7 +19,9 @@ client = OpenAI()
 
 ASSISTANT_NAME = getenv("ASSISTANT_NAME", "BBall Analyst")
 
-function = {
+# This has to be kept in sync with the Agent.get_dataset() method
+# Would be great to have this defined once
+get_dataset_definition = {
     "type": "function",
     "function": {
         "name": "get_dataset",
@@ -30,7 +29,7 @@ function = {
         "parameters": {
             "type": "object",
             "properties": {
-            "name": {"type": "string", "description": "Name of the dataset"},
+                "name": {"type": "string", "description": "Name of the dataset"},
             },
             "required": ["name"]
         }
@@ -41,7 +40,7 @@ assistant_config = {
     "name": ASSISTANT_NAME,
     "instructions": Prompts.gpt_instructions.render(),
     "model": "gpt-3.5-turbo-1106",
-    "tools": [function]
+    "tools": [get_dataset_definition]
 }
 
 def get_assistant() -> Optional[Assistant]:
@@ -80,9 +79,6 @@ class Agent:
 
     def add_datasets(self, datasets: dict[str, DataFrame]):
         logger.info(f"Adding datasets {datasets.keys()}")
-        # if self.datasets is None:
-        #     self.datasets
-        # else:
         self.datasets.update(datasets)
         logger.info(f"Added datasets {self.datasets.keys()}")
 
@@ -113,11 +109,10 @@ class Agent:
             )
 
     def execute_function_call(self, func: oaiFunction):
-        # action.submit_tool_outputs.tool_calls[0].function.name
         _args = json.loads(func.arguments)
         logger.info(f"Executing {func.name} args {_args}")
         if func.name == "get_dataset":
-            return self.get_dataset(_args["name"])
+            return self.get_dataset(**_args)
         else:
             return None
 
@@ -145,14 +140,14 @@ class Agent:
             assistant_id=self.assistant.id
         )
 
-        # poll for status
-        # "pending", "requires_action" for function calling
+        """
+        poll for status
+        "pending", "requires_action" for function calling
+        """
         while run.status in ("queued", "in_progress", "pending", "requires_action"):
             logger.info(f"wating for run status {run.status}")
 
             if run.status == "requires_action":
-                logger.info("run requires action")
-                logger.info(run.required_action)
                 self.execute_required_action(run, run.required_action)
 
             run = client.beta.threads.runs.retrieve(
@@ -168,6 +163,4 @@ class Agent:
             thread_id=self.thread.id
         )
 
-        logger.info("LLM response")
-        logger.info(messages)
         return messages.data[0].content[0].text.value
