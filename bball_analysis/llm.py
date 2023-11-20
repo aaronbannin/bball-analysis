@@ -82,7 +82,7 @@ class Agent:
         self.datasets.update(datasets)
         logger.info(f"Added datasets {self.datasets.keys()}")
 
-    def get_dataset(self, name: str, **kwargs) -> Optional[DataFrame]:
+    def get_dataset(self, name: str):
         keys = self.datasets.keys()
         logger.info(f"Getting dataset {name} keys {keys}")
         if name in self.datasets:
