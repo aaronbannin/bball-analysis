@@ -1,5 +1,4 @@
 import random
-# from typing import Any
 
 import streamlit as st
 from loguru import logger
