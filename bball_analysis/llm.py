@@ -91,22 +91,28 @@ class Agent:
         return None
 
     def execute_required_action(self, run: Run, action: RequiredAction):
+        tool_calls = action.submit_tool_outputs.tool_calls
+        tool_call_ids = ",".join([t.id for t in tool_calls])
+        logger.info(f"Executing tool calls {tool_call_ids}")
+        outputs = []
         for tool_call in action.submit_tool_outputs.tool_calls:
-            logger.info(f"Executing {tool_call.id} {tool_call.function.name}")
+            logger.info(f"Executing {tool_call.id} {tool_call.function}")
             # execute
             output = self.execute_function_call(tool_call.function)
             if output is None:
                 logger.error(f"No response from {tool_call.id} {tool_call.function.name}")
 
-            # submit response to thread
-            self.client.beta.threads.runs.submit_tool_outputs(
-                thread_id=self.thread.id,
-                run_id=run.id,
-                tool_outputs=[{
-                    "tool_call_id": tool_call.id,
-                    "output": str(output)
-                }]
-            )
+            outputs.append({
+                "tool_call_id": tool_call.id,
+                "output": str(output)
+            })
+
+        # submit response to thread
+        self.client.beta.threads.runs.submit_tool_outputs(
+            thread_id=self.thread.id,
+            run_id=run.id,
+            tool_outputs=outputs
+        )
 
     def execute_function_call(self, func: oaiFunction):
         _args = json.loads(func.arguments)

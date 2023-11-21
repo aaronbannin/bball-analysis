@@ -1,4 +1,4 @@
-from typing import Any
+import random
 
 import streamlit as st
 from loguru import logger
@@ -12,9 +12,16 @@ from prompts import Prompts
 http = HTTPService()
 if st.session_state.get("agent") is None:
     st.session_state["agent"] = Agent()
-
+TEAMS = [t.value for t in Team]
 
 # utility functions
+def set_random_team():
+    team = random.choice(TEAMS)
+    logger.info(f"Picked {team} randommly")
+    st.session_state["team"] = None
+    st.session_state["team_picker"] = team
+    return set_chat_context()
+
 def set_chat_context():
     """
     Creates a clean context for chat.
@@ -43,7 +50,6 @@ def set_chat_context():
     st.session_state["agent"].set_thread()
     st.session_state["agent"].add_datasets(overview.tables)
     st.session_state["messages"] = seed_messages
-    # enriched_content = [str(overview.summary)]
     enriched_content = [str(overview.summary), "you have the following data sets availiable", ",".join([t for t in overview.tables.keys()])]
     seed_msg_response = st.session_state["agent"].chat(enrich_user_message(seed_message, enriched_content))
     st.session_state.messages.append({"role": "role", "content": seed_msg_response})
@@ -61,10 +67,14 @@ def enrich_user_message(message: str, content: list[str]):
 st.title("Talkin' Some Bball Outside of the School")
 team_name = st.selectbox(
     Prompts.initial_user_prompt.render(),
-    [t.value for t in Team],
+    TEAMS,
     index=None,
     key="team_picker",
     on_change=set_chat_context
+)
+st.button(
+    "Random",
+    on_click=set_random_team
 )
 
 if team_name is not None and "messages" in st.session_state:
