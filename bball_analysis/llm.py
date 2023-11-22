@@ -1,3 +1,4 @@
+import asyncio
 import json
 from os import getenv
 from time import sleep
@@ -131,6 +132,45 @@ class Agent:
         logger.info("resetting memory")
         self.thread = self.client.beta.threads.create()
 
+    async def oai_chat(self, message: str) -> list[str]:
+        logger.info(f"begin chat {message}")
+        client.beta.threads.messages.create(
+            thread_id=self.thread.id,
+            role="user",
+            content=message
+        )
+
+        logger.info("submitting run")
+        run = self.client.beta.threads.runs.create(
+            thread_id=self.thread.id,
+            assistant_id=self.assistant.id
+        )
+
+        """
+        poll for status
+        "pending", "requires_action" for function calling
+        """
+        while run.status in ("queued", "in_progress", "pending", "requires_action"):
+            logger.info(f"wating for run status {run.status}")
+
+            if run.status == "requires_action":
+                self.execute_required_action(run, run.required_action)
+
+            run = client.beta.threads.runs.retrieve(
+                thread_id=self.thread.id,
+                run_id=run.id
+            )
+            sleep(1)
+
+        if run.status != "completed":
+            raise Exception(f"Run did not complete {run}")
+
+        messages = client.beta.threads.messages.list(
+            thread_id=self.thread.id
+        )
+
+        return [m.content[0].text.value for m in messages.data]
+
     def chat(self, message: str) -> str:
         """
         Send a message to the assistant and return the response.
@@ -165,7 +205,7 @@ class Agent:
                 thread_id=self.thread.id,
                 run_id=run.id
             )
-            sleep(0.5)
+            sleep(1)
 
         if run.status != "completed":
             raise Exception(f"Run did not complete {run}")
