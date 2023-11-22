@@ -115,10 +115,8 @@ class Agent:
         )
 
     def execute_function_call(self, func: oaiFunction):
-        inject = func.arguments + '}'
         try:
-            # _args = json.loads(func.arguments)
-            _args = json.loads(inject)
+            _args = json.loads(func.arguments)
             logger.info(f"Executing {func.name} args {_args}")
             if func.name == "get_dataset":
                 return self.get_dataset(**_args)
