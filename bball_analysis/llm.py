@@ -115,12 +115,17 @@ class Agent:
         )
 
     def execute_function_call(self, func: oaiFunction):
-        _args = json.loads(func.arguments)
-        logger.info(f"Executing {func.name} args {_args}")
-        if func.name == "get_dataset":
-            return self.get_dataset(**_args)
-        else:
-            return None
+        try:
+            _args = json.loads(func.arguments)
+            logger.info(f"Executing {func.name} args {_args}")
+            if func.name == "get_dataset":
+                return self.get_dataset(**_args)
+            else:
+                return None
+        except json.decoder.JSONDecodeError as e:
+            logger.error(f"Did not receive valid json from OpenAI. {e}")
+            logger.info(func.arguments)
+            raise ValueError(f"Did not receive valid json from OpenAI. Please reload the page and try again.")
 
     def set_thread(self):
         logger.info("resetting memory")
