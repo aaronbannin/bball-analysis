@@ -1,22 +1,60 @@
 import random
 
 import streamlit as st
+from streamlit import chat_message
+from streamlit.runtime.state import SessionStateProxy
 from loguru import logger
 
+from bball_analysis.context import SessionStateManager
 from http_service import HTTPService
 from llm import Agent
-from mappings import Team, TEAM_TO_TEAM_ABBREVIATION
+from mappings import Team, TEAM_TO_TEAM_ABBREVIATION, TEAM_NAMES
 from prompts import Prompts
 
 
+# class SessionStateManager:
+#     def __init__(self, session_state: SessionStateProxy) -> None:
+#         self.state = session_state
+
+#         if "messages" not in self.state:
+#             self.state.messages = []
+
+#         if "agent" not in self.state:
+#             self.state.agent = Agent()
+
+#     @property
+#     def agent(self) -> Agent:
+#         return self.state.agent
+
+#     @property
+#     def messages(self) -> list[dict[str, str]]:
+#         return self.state.messages
+
+#     def populate_chat_messages(self):
+#         for msg in self.messages:
+#             chat_message(msg["role"]).write(msg["content"])
+
+
+#     def _add_message(self, role: str, message: str):
+#         if "messages" not in self.state:
+#             raise KeyError("No messages in state")
+
+#         self.messages.append({"role": role, "content": message})
+#         chat_message(role).write(message)
+
+#     def add_user_message(self, message: str):
+#         return self._add_message("user", message)
+
+#     def add_assistant_message(self, message: str):
+#         return self._add_message("assistant", message)
+
 http = HTTPService()
-if st.session_state.get("agent") is None:
-    st.session_state["agent"] = Agent()
-TEAMS = [t.value for t in Team]
+context = SessionStateManager(st.session_state)
+# TEAMS = [t.value for t in Team]
 
 # utility functions
 def set_random_team():
-    team = random.choice(TEAMS)
+    team = random.choice(TEAM_NAMES)
     logger.info(f"Picked {team} randommly")
     st.session_state["team"] = None
     st.session_state["team_picker"] = team
@@ -52,7 +90,7 @@ def set_chat_context():
     st.session_state["messages"] = seed_messages
     enriched_content = [str(overview.summary), "you have the following data sets availiable", ",".join([t for t in overview.tables.keys()])]
     seed_msg_response = st.session_state["agent"].chat(enrich_user_message(seed_message, enriched_content))
-    st.session_state.messages.append({"role": "role", "content": seed_msg_response})
+    st.session_state.messages.append({"role": "assistant", "content": seed_msg_response})
 
 
 def enrich_user_message(message: str, content: list[str]):
@@ -67,7 +105,7 @@ def enrich_user_message(message: str, content: list[str]):
 st.title("Talkin' Some Bball Outside of the School")
 team_name = st.selectbox(
     Prompts.initial_user_prompt.render(),
-    TEAMS,
+    TEAM_NAMES,
     index=None,
     key="team_picker",
     on_change=set_chat_context
@@ -78,13 +116,10 @@ st.button(
 )
 
 if team_name is not None and "messages" in st.session_state:
-    for msg in st.session_state.messages:
-        st.chat_message(msg["role"]).write(msg["content"])
+    context.populate_chat_messages()
 
     if prompt := st.chat_input():
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        st.chat_message("user").write(prompt)
+        context.add_user_message(prompt)
 
-        response = st.session_state["agent"].chat(prompt)
-        st.session_state.messages.append({"role": "assistant", "content": response})
-        st.chat_message("assistant").write(response)
+        response = context.agent.chat(prompt)
+        context.add_assistant_message(response)
