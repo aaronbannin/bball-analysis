@@ -13,9 +13,17 @@ from openai.types.beta.threads.runs.function_tool_call import Function as oaiFun
 
 from bball_analysis.prompts import Prompts
 
+import phoenix as px
+from phoenix.trace.exporter import HttpExporter
+from phoenix.trace.openai import OpenAIInstrumentor
+from phoenix.trace.tracer import Tracer
 
 load_dotenv()
 client = OpenAI()
+
+# monkey patches openai
+tracer = Tracer(exporter=HttpExporter())
+OpenAIInstrumentor(tracer).instrument()
 
 ASSISTANT_NAME = getenv("ASSISTANT_NAME", "BBall Analyst")
 
@@ -138,40 +146,44 @@ class Agent:
         It would probably be better to have a publisher/subscriber pattern.
         Where subscriber is a background task that polls OpenAI for updates.
         """
-        logger.info(f"begin chat {message}")
-        client.beta.threads.messages.create(
-            thread_id=self.thread.id,
-            role="user",
-            content=message
-        )
 
-        logger.info("submitting run")
-        run = self.client.beta.threads.runs.create(
-            thread_id=self.thread.id,
-            assistant_id=self.assistant.id
-        )
+        msg = {"role": "user", "content": message}
+        return client.chat.completions.create(messages=[msg], model="gpt-3.5-turbo")
 
-        """
-        poll for status
-        "pending", "requires_action" for function calling
-        """
-        while run.status in ("queued", "in_progress", "pending", "requires_action"):
-            logger.info(f"wating for run status {run.status}")
+        # logger.info(f"begin chat {message}")
+        # client.beta.threads.messages.create(
+        #     thread_id=self.thread.id,
+        #     role="user",
+        #     content=message
+        # )
 
-            if run.status == "requires_action":
-                self.execute_required_action(run, run.required_action)
+        # logger.info("submitting run")
+        # run = self.client.beta.threads.runs.create(
+        #     thread_id=self.thread.id,
+        #     assistant_id=self.assistant.id
+        # )
 
-            run = client.beta.threads.runs.retrieve(
-                thread_id=self.thread.id,
-                run_id=run.id
-            )
-            sleep(0.5)
+        # """
+        # poll for status
+        # "pending", "requires_action" for function calling
+        # """
+        # while run.status in ("queued", "in_progress", "pending", "requires_action"):
+        #     logger.info(f"wating for run status {run.status}")
 
-        if run.status != "completed":
-            raise Exception(f"Run did not complete {run}")
+        #     if run.status == "requires_action":
+        #         self.execute_required_action(run, run.required_action)
 
-        messages = client.beta.threads.messages.list(
-            thread_id=self.thread.id
-        )
+        #     run = client.beta.threads.runs.retrieve(
+        #         thread_id=self.thread.id,
+        #         run_id=run.id
+        #     )
+        #     sleep(0.5)
 
-        return messages.data[0].content[0].text.value
+        # if run.status != "completed":
+        #     raise Exception(f"Run did not complete {run}")
+
+        # messages = client.beta.threads.messages.list(
+        #     thread_id=self.thread.id
+        # )
+
+        # return messages.data[0].content[0].text.value
