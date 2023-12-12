@@ -20,6 +20,8 @@ class SessionStateManager:
     """
     Manages Streamlit's session_state.
     Provides a type-hintable interface.
+    For each object you want in state, add as a property.
+
     You should not add any view methods; it will mess up rendering.
     """
     def __init__(self, session_state: SessionStateProxy) -> None:
@@ -99,12 +101,9 @@ class SessionStateManager:
 
         overview = self.http.team_overview(self.team)
         seed_message = f"I am researching the NBA team {self.team}."
-        seed_messages = [
-            {"role": "user", "content": seed_message}
-        ]
 
         # reset memory for streamlit and openai
-        self.agent.set_thread()
+        self.agent.reset()
         self.agent.add_datasets(overview.tables)
         self.seed_user_messages([seed_message])
         enriched_content = [str(overview.summary), "you have the following data sets availiable", ",".join([t for t in overview.tables.keys()])]

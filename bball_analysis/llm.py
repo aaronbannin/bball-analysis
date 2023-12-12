@@ -1,15 +1,18 @@
-import json
+from enum import Enum
 from os import getenv
-from time import sleep
-from typing import Any, Optional
 
 from dotenv import load_dotenv
 from loguru import logger
+from llama_index.agent import OpenAIAgent
+from llama_index.chat_engine.types import AgentChatResponse
+from llama_index.llms import OpenAI as LIOpenAI
+from llama_index.tools import FunctionTool
+from llama_index.callbacks import (
+    CallbackManager,
+    LlamaDebugHandler,
+)
 from pandas import DataFrame
 from openai import OpenAI
-from openai.types.beta import Assistant, AssistantDeleted
-from openai.types.beta.threads.run import RequiredAction, Run
-from openai.types.beta.threads.runs.function_tool_call import Function as oaiFunction
 
 from bball_analysis.prompts import Prompts
 
@@ -17,65 +20,45 @@ from bball_analysis.prompts import Prompts
 load_dotenv()
 client = OpenAI()
 
-ASSISTANT_NAME = getenv("ASSISTANT_NAME", "BBall Analyst")
 
-# This has to be kept in sync with the Agent.get_dataset() method
-# Would be great to have this defined once
-get_dataset_definition = {
-    "type": "function",
-    "function": {
-        "name": "get_dataset",
-        "description": "Fetch a dataset by name",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string", "description": "Name of the dataset"},
-            },
-            "required": ["name"]
-        }
-    }
-}
+VERBOSE = True if getenv("VERBOSE") == "True" else False
 
-assistant_config = {
-    "name": ASSISTANT_NAME,
-    "instructions": Prompts.gpt_instructions.render(),
-    "model": "gpt-3.5-turbo-1106",
-    "tools": [get_dataset_definition]
-}
+class OpenAIModels(Enum):
+    """
+    Models availible from OpenAI
+    Sadly, this is not availible in their library
+    """
 
-def get_assistant() -> Optional[Assistant]:
-    all = client.beta.assistants.list()
-    existing = [a for a in all if a.name == ASSISTANT_NAME]
-    if len(existing) == 0:
-        return None
-
-    return existing[0]
-
-def update_assistant(assistant_id: str) -> Assistant:
-    return client.beta.assistants.update(
-        assistant_id=assistant_id,
-        **assistant_config
-    )
-
-def make_assistant() -> Assistant:
-    return client.beta.assistants.create(**assistant_config)
-
-def delete_assistant(assistant_id: str) -> AssistantDeleted:
-    return client.beta.assistants.delete(assistant_id=assistant_id)
-
+    gpt3_5_turbo_0613 = "gpt-3.5-turbo-0613"
+    gpt3_5_turbo_1106 = "gpt-3.5-turbo-1106"
+    gpt3_5_turbo = "gpt-3.5-turbo"
+    gpt3_5_turbo_16k = "gpt-3.5-turbo-16k"
+    gpt4 = "gpt-4"
 
 
 class Agent:
-    def __init__(self):
-        self.client = client
+    def __init__(self) -> None:
+        self._llm = LIOpenAI(model=OpenAIModels.gpt3_5_turbo_1106.value)
 
-        _assistant = get_assistant()
-        if _assistant is None:
-            raise Exception("Assistant does not exist; create one using the cli")
+        callbacks = None
+        if VERBOSE:
+            llama_debug = LlamaDebugHandler(print_trace_on_end=True)
+            callbacks = CallbackManager([llama_debug])
 
-        self.assistant = _assistant
-        self.set_thread()
+        tools = [FunctionTool.from_defaults(fn=self.get_dataset)]
+
+        self._li_agnet = OpenAIAgent.from_tools(
+            tools=tools,
+            llm=self._llm,
+            verbose=VERBOSE,
+            callback_manager=callbacks,
+            system_prompt=Prompts.gpt_instructions.render()
+        )
         self.datasets: dict[str, DataFrame] = {}
+
+    def reset(self) -> None:
+        """Reset conversation state; wraps llama_index"""
+        self._li_agnet.reset()
 
     def add_datasets(self, datasets: dict[str, DataFrame]):
         logger.info(f"Adding datasets {datasets.keys()}")
@@ -83,6 +66,7 @@ class Agent:
         logger.info(f"Added datasets {self.datasets.keys()}")
 
     def get_dataset(self, name: str):
+        """Fetch a dataset by name"""
         keys = self.datasets.keys()
         logger.info(f"Getting dataset {name} keys {keys}")
         if name in self.datasets:
@@ -90,88 +74,7 @@ class Agent:
 
         return None
 
-    def execute_required_action(self, run: Run, action: RequiredAction):
-        tool_calls = action.submit_tool_outputs.tool_calls
-        tool_call_ids = ",".join([t.id for t in tool_calls])
-        logger.info(f"Executing tool calls {tool_call_ids}")
-        outputs = []
-        for tool_call in action.submit_tool_outputs.tool_calls:
-            logger.info(f"Executing {tool_call.id} {tool_call.function}")
-            # execute
-            output = self.execute_function_call(tool_call.function)
-            if output is None:
-                logger.error(f"No response from {tool_call.id} {tool_call.function.name}")
-
-            outputs.append({
-                "tool_call_id": tool_call.id,
-                "output": str(output)
-            })
-
-        # submit response to thread
-        self.client.beta.threads.runs.submit_tool_outputs(
-            thread_id=self.thread.id,
-            run_id=run.id,
-            tool_outputs=outputs
-        )
-
-    def execute_function_call(self, func: oaiFunction):
-        try:
-            _args = json.loads(func.arguments)
-            logger.info(f"Executing {func.name} args {_args}")
-            if func.name == "get_dataset":
-                return self.get_dataset(**_args)
-            else:
-                return None
-        except json.decoder.JSONDecodeError as e:
-            logger.error(f"Did not receive valid json from OpenAI. {e}")
-            logger.info(func.arguments)
-            raise ValueError(f"Did not receive valid json from OpenAI. Please reload the page and try again.")
-
-    def set_thread(self):
-        logger.info("resetting memory")
-        self.thread = self.client.beta.threads.create()
-
     def chat(self, message: str) -> str:
-        """
-        Send a message to the assistant and return the response.
-        This is forcing an async function into a sync function.
-        It would probably be better to have a publisher/subscriber pattern.
-        Where subscriber is a background task that polls OpenAI for updates.
-        """
         logger.info(f"begin chat {message}")
-        client.beta.threads.messages.create(
-            thread_id=self.thread.id,
-            role="user",
-            content=message
-        )
-
-        logger.info("submitting run")
-        run = self.client.beta.threads.runs.create(
-            thread_id=self.thread.id,
-            assistant_id=self.assistant.id
-        )
-
-        """
-        poll for status
-        "pending", "requires_action" for function calling
-        """
-        while run.status in ("queued", "in_progress", "pending", "requires_action"):
-            logger.info(f"wating for run status {run.status}")
-
-            if run.status == "requires_action":
-                self.execute_required_action(run, run.required_action)
-
-            run = client.beta.threads.runs.retrieve(
-                thread_id=self.thread.id,
-                run_id=run.id
-            )
-            sleep(0.5)
-
-        if run.status != "completed":
-            raise Exception(f"Run did not complete {run}")
-
-        messages = client.beta.threads.messages.list(
-            thread_id=self.thread.id
-        )
-
-        return messages.data[0].content[0].text.value
+        response: AgentChatResponse = self._li_agnet.chat(message)
+        return response.response
