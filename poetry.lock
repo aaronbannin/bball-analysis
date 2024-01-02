@@ -111,20 +111,6 @@ files = [
 frozenlist = ">=1.1.0"
 
 [[package]]
-name = "aiostream"
-version = "0.5.2"
-description = "Generator-based operators for asynchronous iteration"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "aiostream-0.5.2-py3-none-any.whl", hash = "sha256:054660370be9d37f6fe3ece3851009240416bd082e469fd90cc8673d3818cf71"},
-    {file = "aiostream-0.5.2.tar.gz", hash = "sha256:b71b519a2d66c38f0872403ab86417955b77352f08d9ad02ad46fc3926b389f4"},
-]
-
-[package.dependencies]
-typing-extensions = "*"
-
-[[package]]
 name = "altair"
 version = "5.1.2"
 description = "Vega-Altair: A declarative statistical visualization library for Python."
@@ -688,13 +674,13 @@ files = [
 
 [[package]]
 name = "fsspec"
-version = "2023.12.1"
+version = "2023.12.2"
 description = "File-system specification"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "fsspec-2023.12.1-py3-none-any.whl", hash = "sha256:6271f1d3075a378bfe432f6f42bf7e1d2a6ba74f78dd9b512385474c579146a0"},
-    {file = "fsspec-2023.12.1.tar.gz", hash = "sha256:c4da01a35ac65c853f833e43f67802c25213f560820d54ddf248f92eddd5e990"},
+    {file = "fsspec-2023.12.2-py3-none-any.whl", hash = "sha256:d800d87f72189a745fa3d6b033b9dc4a34ad069f60ca60b943a63599f5501960"},
+    {file = "fsspec-2023.12.2.tar.gz", hash = "sha256:8548d39e8810b59c38014934f6b31e57f40c1b20f911f4cc2b85389c7e9bf0cb"},
 ]
 
 [package.extras]
@@ -1107,18 +1093,17 @@ test = ["ipykernel", "pre-commit", "pytest", "pytest-cov", "pytest-timeout"]
 
 [[package]]
 name = "llama-index"
-version = "0.9.13"
+version = "0.9.15"
 description = "Interface between LLMs and your data"
 optional = false
 python-versions = ">=3.8.1,<4.0"
 files = [
-    {file = "llama_index-0.9.13-py3-none-any.whl", hash = "sha256:1fba9039e6b223f7940d2bde7a587638af886d220d2074780660b010fb0149f5"},
-    {file = "llama_index-0.9.13.tar.gz", hash = "sha256:dd12003395e4e92e8b70879f3845e4bdd4614027870b0979253ba9291bae4c35"},
+    {file = "llama_index-0.9.15-py3-none-any.whl", hash = "sha256:ea73c1c37745f62b7363e69b992cde21ea1d26add3190d7ad2112acc70acd4b1"},
+    {file = "llama_index-0.9.15.tar.gz", hash = "sha256:0f6501db61a6b72ed8c293353331b58d16db202323c9312241b071ce1f78a655"},
 ]
 
 [package.dependencies]
 aiohttp = ">=3.8.6,<4.0.0"
-aiostream = ">=0.5.2,<0.6.0"
 beautifulsoup4 = ">=4.12.2,<5.0.0"
 dataclasses-json = "*"
 deprecated = ">=1.2.9.3"
@@ -1133,6 +1118,7 @@ requests = ">=2.31.0"
 SQLAlchemy = {version = ">=1.4.49", extras = ["asyncio"]}
 tenacity = ">=8.2.0,<9.0.0"
 tiktoken = ">=0.3.3"
+types-protobuf = ">=4.24.0.4,<5.0.0.0"
 typing-extensions = ">=4.5.0"
 typing-inspect = ">=0.8.0"
 
@@ -2840,6 +2826,17 @@ docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
 test = ["argcomplete (>=3.0.3)", "mypy (>=1.6.0)", "pre-commit", "pytest (>=7.0,<7.5)", "pytest-mock", "pytest-mypy-testing"]
 
 [[package]]
+name = "types-protobuf"
+version = "4.24.0.4"
+description = "Typing stubs for protobuf"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "types-protobuf-4.24.0.4.tar.gz", hash = "sha256:57ab42cb171dfdba2c74bb5b50c250478538cc3c5ed95b8b368929ad0c9f90a5"},
+    {file = "types_protobuf-4.24.0.4-py3-none-any.whl", hash = "sha256:131ab7d0cbc9e444bc89c994141327dcce7bcaeded72b1acb72a94827eb9c7af"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.8.0"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -3194,4 +3191,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9, !=3.9.7"
-content-hash = "34c5bbaa3169ed0b7a3bf939aa2427e8446da2da7411da8f2232096cff98da6a"
+content-hash = "1e15fff15e6aa063db9709a7780a9a72579c4f74380422a7421a75bb8eaeb007"
