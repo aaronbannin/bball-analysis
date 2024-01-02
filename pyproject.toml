@@ -15,7 +15,7 @@ loguru = "^0.7.2"
 jinja2 = "^3.1.2"
 bs4 = "^0.0.1"
 lxml = "^4.9.3"
-llama-index = "^0.9.13"
+llama-index = {path = "/Users/aaronbannin/projects/llama_index", develop = true}
 
 
 [tool.poetry.group.dev.dependencies]

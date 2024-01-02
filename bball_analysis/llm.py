@@ -20,6 +20,15 @@ from bball_analysis.prompts import Prompts
 load_dotenv()
 client = OpenAI()
 
+import logging
+
+# loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+# print(loggers)
+logging.basicConfig()
+# logging.basicConfig(level=logging.INFO)
+# logging.getLogger("llama_index.agent.openai_agent").setLevel(logging.DEBUG)
+logging.getLogger("llama_index").setLevel(logging.DEBUG)
+
 
 VERBOSE = True if getenv("VERBOSE") == "True" else False
 

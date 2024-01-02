@@ -8,6 +8,13 @@ from prompts import Prompts
 
 context = SessionStateManager(st.session_state)
 
+import logging
+# logging.basicConfig(level=logging.INFO)
+# logging.basicConfig()
+# logging.getLogger("llama_index.agent.openai_agent").setLevel(logging.DEBUG)
+# loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+# print(loggers)
+
 # app
 st.title("Talkin' Some Bball Outside of the School")
 team_name = st.selectbox(
