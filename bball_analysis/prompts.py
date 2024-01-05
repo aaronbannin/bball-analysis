@@ -19,5 +19,9 @@ class PromptManager:
     def analysis_overview(self):
         return self.env.get_template("analysis_overview.jinja")
 
+    @property
+    def team_selection_prompt(self):
+        return self.env.get_template("team_selection_prompt.jinja")
+
 
 Prompts = PromptManager()

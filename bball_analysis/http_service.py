@@ -62,6 +62,22 @@ class HTTPService:
         for script in summary_soup(["script"]):
             script.extract()  # Remove script tags and their contents
 
+        # team links
+        link_dict = {}
+        links = page.find('div', attrs={'id': 'inner_nav'})
+        # print(f"found links {links}")
+        # for link in links:
+        #     # Get the href attribute (the URL)
+        #     href = link.get('href')
+
+        #     # Get the visible text associated with the link
+        #     # Using .get_text() to get the visible text and stripping to remove leading/trailing whitespaces
+        #     text = link.get_text(strip=True)
+
+        #     # Add to dictionary if not already present (to deduplicate)
+        #     if href not in link_dict:
+        #         link_dict[href] = text
+
         summary = "".join(summary_soup.find_all(text=True))
         summary = re.sub(r'\n+', '\n', summary)
 
