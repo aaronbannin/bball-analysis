@@ -7,7 +7,7 @@ from streamlit.runtime.state import SessionStateProxy
 from bball_analysis.http_service import HTTPService
 from bball_analysis.llm import Agent
 from bball_analysis.mappings import Team, TEAM_NAMES, TEAM_TO_TEAM_ABBREVIATION
-
+from bball_analysis.prompts import Prompts
 
 def enrich_user_message(message: str, content: list[str]):
     """
@@ -106,6 +106,11 @@ class SessionStateManager:
         self.agent.reset()
         self.agent.add_datasets(overview.tables)
         self.seed_user_messages([seed_message])
-        enriched_content = [str(overview.summary), "you have the following data sets availiable", ",".join([t for t in overview.tables.keys()])]
-        seed_msg_response = self.agent.chat(enrich_user_message(seed_message, enriched_content))
+        enriched_content = Prompts.team_selection_prompt.render(
+            seed_message=seed_message,
+            overview=str(overview.summary),
+            datasets=",".join([t for t in overview.tables.keys()])
+        )
+
+        seed_msg_response = self.agent.chat(enriched_content)
         self.add_assistant_message(seed_msg_response)
