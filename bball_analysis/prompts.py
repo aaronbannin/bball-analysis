@@ -23,5 +23,9 @@ class PromptManager:
     def team_selection_prompt(self):
         return self.env.get_template("team_selection_prompt.jinja")
 
+    @property
+    def user_question_prompt(self):
+        return self.env.get_template("user_question.jinja")
+
 
 Prompts = PromptManager()
